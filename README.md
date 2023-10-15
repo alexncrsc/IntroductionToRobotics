@@ -1,4 +1,9 @@
-Introduction to Robotics (2023 - 2024)#
-Description
+# 👾 Introduction to Robotics (2023 - 2024) 👾
 
-This repo is all about diving into the fascinating world of robotics! 🤖 It's the hub for all the exciting lab homeworks we tackle during the 3rd year at the Faculty of Mathematics and Computer Science, University of Bucharest. Each homework is a unique adventure, packed with requirements, nifty implementation details, and a treasure trove of code and image files.
+##  Description
+This repo is all about the homework assignments from the Introduction to Robotics course. I'm pretty excited to see what interesting robots I will create. Every project will be explained in detail, so you can be a part of the journey with me. Let's build together!
+
+##  Homework 1
+
+TBA
+(...)
