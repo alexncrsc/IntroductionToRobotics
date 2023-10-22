@@ -1,0 +1,31 @@
+const int red_Pin = 9;     
+const int green_Pin = 10; 
+const int blue_Pin = 11;  
+//Pins for output to the RGB led
+
+const int redAPin = A0;   
+const int greenAPin = A1;  
+const int blueAPin = A2;  
+//Pins for the input to the ARDUINO
+void setup() {
+//defining the PINS for OUTPUT
+  pinMode(red_Pin, OUTPUT);
+  pinMode(green_Pin, OUTPUT);
+  pinMode(blue_Pin, OUTPUT);
+}
+
+void loop() {
+//defining the PINS for INPUT
+  int red_Value = analogRead(redAPin);
+  int green_Value = analogRead(greenAPin);
+  int blue_Value = analogRead(blueAPin);
+
+//using map to convert to the RGB Led standard
+  int red_Brightness = map(red_Value, 0, 1023, 0, 255);
+  int green_Brightness = map(green_Value, 0, 1023, 0, 255);
+  int blue_Brightness = map(blue_Value, 0, 1023, 0, 255);
+//analogWrite functions
+ analogWrite(red_Pin, red_Brightness);
+  analogWrite(green_Pin, green_Brightness);
+  analogWrite(blue_Pin, blue_Brightness);
+}
