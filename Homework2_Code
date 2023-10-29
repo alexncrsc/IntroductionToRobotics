@@ -1,0 +1,96 @@
+const int buttonPins[] = {2, 3, 4};  // Pins for floors
+const int ledPins[] = {10, 11, 12, 13};  // Pins for LEDs
+int currentFloor = 1;  // Current floor (initially at floor 1)
+unsigned long floorDelay = 3000;  // Time for the elevator to reach each floor
+unsigned long ledDelay = 1000;  // LED delay
+unsigned long startTime;  // Variable used for startTime in various scenarios
+unsigned duration1;  // Variable 1 for duration
+unsigned duration2;  // Variable 2 for duration
+const int buzzerPin = 8;  // Pin for buzzer
+unsigned int buzzerTone = 400;  // Buzzer tone used when the elevator arrives at a specified floor
+unsigned int toneDuration = 1000;  // Duration for the buzzer described above
+unsigned int buzzerTone_HIGH = 900;  // Buzzer tone used when the elevator is moving and for the floors
+unsigned int toneDuration_SHORT = 150;  // Duration for the buzzer used above
+
+int buttonState[3] = {LOW, LOW, LOW};  // Store the current button state
+int lastButtonState[3] = {LOW, LOW, LOW};  // Store the last button state
+unsigned long lastDB[3] = {0, 0, 0};  // The time when the button was pressed the last time
+unsigned long debounceDelay = 50;  // The delay for the debounce set by you
+
+void setup() {
+  
+  for (int i = 0; i < 4; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);
+  }
+   digitalWrite(ledPins[3], HIGH);  // Keeping the 4th LED ON to announce that the elevator is ready to be used
+   digitalWrite(ledPins[currentFloor-1], HIGH);  // Also the LED for the current floor
+}
+
+void loop() {
+  for (int i = 0; i < 3; i++) {  // Using a loop to check if the state of the button has changed for all three buttons
+    int r = digitalRead(buttonPins[i]);  // Reading the button state
+    if (r != lastButtonState[i]) {  // Checking if the state has changed
+      lastDB[i] = millis();  // Updating the debounce time
+    }
+
+    if ((millis() - lastDB[i]) > debounceDelay) {  // Verifying that the debounce delay is met
+      if (r != buttonState[i]) {  // Changing the current button state
+        buttonState[i] = r;
+
+        if (buttonState[i] == LOW) {  // If the button is pressed, call the Move_the_Elevator function
+          Move_the_Elevator(i + 1);
+          tone(buzzerPin, buzzerTone, toneDuration);  // Buzz to announce the elevator is ready to use
+        }
+      }
+    }
+    lastButtonState[i] = r;  // Updating the last state
+  }
+}
+
+void Move_the_Elevator(int target_floor) {  // Two options for the elevator: to go up, to go down
+  if (target_floor > currentFloor) {
+    for (int floor = currentFloor; floor < target_floor; floor++) {  // Updating the LEDs for each floor
+      currentFloor = floor + 1;
+      updateLEDs_asc();
+    }
+  } else if (target_floor < currentFloor) {
+    for (int floor = currentFloor; floor > target_floor; floor--) {  // Updating the LEDs for each floor
+      currentFloor = floor - 1;
+      updateLEDs_desc();
+    }
+  }
+}
+
+void updateLEDs_asc() {
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(ledPins[i], currentFloor == i + 1 ? HIGH : LOW);  // Turning off the LEDs for the floors that are not the current floor, turning on the LED for the current floor
+    startTime = millis();
+    duration1 = 700;
+    duration2 = 50;
+    while (millis() - startTime < duration1) {  // Using two while loops for the effect of switching on and off the LED that shows if the elevator is available
+      digitalWrite(ledPins[3], HIGH);
+      while (millis() - startTime < duration2) {
+        digitalWrite(ledPins[3], LOW);
+      }
+      tone(buzzerPin, buzzerTone_HIGH, toneDuration_SHORT);  // The elevator in use buzzer sound
+    }
+  }
+}
+
+void updateLEDs_desc() {
+  for (int i = 2; i >= 0; i--) {
+    digitalWrite(ledPins[i], currentFloor == i + 1 ? HIGH : LOW);
+    startTime = millis();
+    duration1 = 700;
+    duration2 = 100;
+    while (millis() - startTime < duration1) {
+      digitalWrite(ledPins[3], HIGH);
+      while (millis() - startTime < duration2) {
+        digitalWrite(ledPins[3], LOW);
+      }
+      tone(buzzerPin, buzzerTone_HIGH, toneDuration_SHORT);
+    }
+  }
+}
