@@ -71,14 +71,14 @@ View a short video showcasing the project on [YouTube](https://youtu.be/kRsa0LXN
 
 To be fair, I don't where to start from, this was the hardest one yet, 7 hours straight, working on it. 
 
-##Description:
+## Description:
 The homework focused on using a 7-segment display. I learned how to implement interrupts and gained a better understanding of the Arduino's flow. While I believe I've improved my ability to work with the flow and create useful functions, I acknowledge that the approach I took for this homework was quite complex. During the project, I used various delay variables and the millis function for different purposes, including debouncing both joystick movement and button presses.
 
 I worked with three arrays simultaneously: one for controlling the LED pins, one for storing the segment names to track the current segment, and another for keeping track of which LEDs were selected. The most challenging aspect of the assignment was ensuring that the Arduino didn't repeatedly toggle the segment due to continuous button presses.
 
-##Photo: ![Untitled](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/18de8167-37eb-4781-9a72-8224dae3901d)
+## Photo: ![Untitled](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/18de8167-37eb-4781-9a72-8224dae3901d)
 
 
-##Link to a video where it's showcased:  https://www.youtube.com/watch?v=0s4tPm-hV2c&feature=youtu.be
+## Link to a video where it's showcased:  https://www.youtube.com/watch?v=0s4tPm-hV2c&feature=youtu.be
 
 
