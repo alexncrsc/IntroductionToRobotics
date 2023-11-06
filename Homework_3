@@ -1,0 +1,243 @@
+volatile bool buttonPressed = false; // Track if the button was pressed and use volatile
+volatile unsigned long buttonPressTime = 0; // Record the time of the button press and use volatile
+volatile bool interruptFlag = false; // Flag to indicate an interrupt should occur
+unsigned long interruptDelay = 2000; // 2 seconds in milliseconds
+int ButtonPress_Light;
+int delay_500_ms=500;
+// Debounce
+bool buttonState = LOW; // Current state of the button
+bool lastButtonState = LOW; // Previous state of the button
+unsigned long lastDebounceTime = 0; // Last time the button state changed
+unsigned long debounceDelay = 50; // Debounce delay in milliseconds
+
+unsigned long start = 0;
+unsigned long previousTime = 0;
+unsigned long delayTime = 200;
+int index = 0; // DP
+int memory[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+const int segmentPins[] = {4, 5, 6, 7, 8, 9, 10, 11};
+const char segmentSeg[] = {'D', 'g', 'f', 'e', 'd', 'c', 'b', 'a'};
+int jSW;
+bool sw = 1;
+
+char currentSegment = 'D'; // Start with 'dp' segment turned on
+char direction;
+
+int joystickX = A0; // Joystick X-axis connected to analog pin A0
+int joystickY = A1; // Joystick Y-axis connected to analog pin A1
+int joystickSW = 3;
+
+void setup() {
+  Serial.begin(9600);
+
+  for (int i = 0; i < 8; i++) {
+    pinMode(segmentPins[i], OUTPUT);
+    digitalWrite(segmentPins[i], LOW);
+  }
+
+  pinMode(joystickSW, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(joystickSW), handleInterrupt, FALLING);
+}
+
+void loop() {
+  if (interruptFlag) {
+    // Button press detected, set the buttonPressed flag and record the time
+    buttonPressTime = millis();
+    interruptFlag = false; // Reset the flag
+  }
+
+  // Check if the interrupt should be triggered after 2 seconds
+  if (buttonState == LOW && (millis() - buttonPressTime >= interruptDelay)) {
+    // Trigger your interrupt action here
+    handleDelayedInterrupt();
+  }
+
+  digitalWrite(segmentPins[index], sw);
+
+  if (millis() - start > 300) {
+    start = millis();
+    sw = !sw;
+  }
+
+  int xVal = analogRead(joystickX);
+  int yVal = analogRead(joystickY);
+  jSW = digitalRead(joystickSW);
+
+  if (jSW != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (jSW != buttonState) {
+      buttonState = jSW;
+        ButtonPress_Light = millis();
+    }
+  }
+
+  unsigned long currentTime = millis();
+  if (currentTime - previousTime >= delayTime) {
+    displaySegment();
+
+    // Check joystick direction and update the current segment accordingly
+    if (xVal < 100) { // Move left
+      change(currentSegment, 'L');
+      displaySegment();
+    } else if (xVal > 900) { // Move right
+      change(currentSegment, 'R');
+      displaySegment();
+    } else if (yVal < 100) { // Move up
+      change(currentSegment, 'U');
+      displaySegment();
+    } else if (yVal > 900) { // Move down
+      change(currentSegment, 'D');
+      displaySegment();
+    }
+
+    previousTime = currentTime;
+    lastButtonState = jSW;
+  }
+}
+
+void displaySegment() {
+  for (int i = 0; i < 8; i++) {
+    if (segmentSeg[i] == currentSegment) {
+      index = i;
+    }
+
+    if (buttonState == LOW && index == i && millis() - ButtonPress_Light > delay_500_ms) {
+      Serial.print("da");
+      memory[index] = !memory[index];
+      ButtonPress_Light = millis();
+    }
+
+    if (memory[i] == 1) {
+      digitalWrite(segmentPins[i], HIGH);
+    } else {
+      digitalWrite(segmentPins[i], LOW);
+    }
+  }
+}
+
+void change(char x, char direction) {
+  switch (x) {
+    case 'a':
+      switch (direction) {
+        case 'L':
+          currentSegment = 'f';
+          break;
+        case 'R':
+          currentSegment = 'b';
+          break;
+        case 'D':
+          currentSegment = 'g';
+          break;
+      }
+      break;
+
+    case 'b':
+      switch (direction) {
+        case 'L':
+          currentSegment = 'f';
+          break;
+        case 'U':
+          currentSegment = 'a';
+          break;
+        case 'D':
+          currentSegment = 'g';
+          break;
+      }
+      break;
+
+    case 'c':
+      switch (direction) {
+        case 'L':
+          currentSegment = 'e';
+          break;
+        case 'R':
+          currentSegment = 'D';
+          break;
+        case 'U':
+          currentSegment = 'g';
+          break;
+        case 'D':
+          currentSegment = 'd';
+          break;
+      }
+      break;
+
+    case 'd':
+      switch (direction) {
+        case 'L':
+          currentSegment = 'e';
+          break;
+        case 'R':
+          currentSegment = 'c';
+          break;
+        case 'U':
+          currentSegment = 'g';
+          break;
+      }
+      break;
+
+    case 'e':
+      switch (direction) {
+        case 'R':
+          currentSegment = 'c';
+          break;
+        case 'U':
+          currentSegment = 'g';
+          break;
+        case 'D':
+          currentSegment = 'd';
+          break;
+      }
+      break;
+
+    case 'f':
+      switch (direction) {
+        case 'R':
+          currentSegment = 'b';
+          break;
+        case 'U':
+          currentSegment = 'a';
+          break;
+        case 'D':
+          currentSegment = 'g';
+          break;
+      }
+      break;
+
+    case 'g':
+      switch (direction) {
+        case 'U':
+          currentSegment = 'a';
+          break;
+        case 'D':
+          currentSegment = 'd';
+          break;
+      }
+      break;
+
+    case 'D':
+      switch (direction) {
+        case 'L':
+          currentSegment = 'c';
+          break;
+      }
+      break;
+  }
+}
+
+void handleInterrupt() {
+  interruptFlag = true;
+}
+
+void handleDelayedInterrupt() {
+  for (int i = 0; i < 8; i++) {
+    memory[i] = 0;
+    digitalWrite(segmentPins[i], LOW);
+  }
+  currentSegment = 'D';
+  index = 0;
+}
