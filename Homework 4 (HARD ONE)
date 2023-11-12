@@ -1,0 +1,259 @@
+// DS = [D]ata [S]torage - data
+// STCP = [ST]orage [C]lock [P]in latch
+// SHCP = [SH]ift register [C]lock [P]in clock
+const byte  zeroDP=B11111101;
+const byte buttonS = 2;  // Pin connected to the button
+volatile bool button1Pressed = HIGH;
+int currentIndex=0;
+
+const int numberOfTimestamps = 5;
+unsigned long timestampArray[numberOfTimestamps];
+
+
+const byte buttonR = 8;  // Pin connected to the button ??MODIFICAT
+volatile bool button2Pressed = HIGH;
+
+const byte buttonL = 3;  // Pin connected to the button
+volatile bool button3Pressed = HIGH;
+
+const byte latchPin = 11; // STCP to 12 on Shift Register
+const byte clockPin = 10; // SHCP to 11 on Shift Register
+const byte dataPin = 12; // DS to 14 on Shift Register
+int currentMillis;
+int lastDebounceTime3=0;
+const byte segD1 = 4;
+const byte segD2 = 5;
+const byte segD3 = 6;
+const byte segD4 = 7;
+
+const byte regSize = 8; // 1 byte aka 8 bits
+
+byte displayDigits[] = {
+  segD1, segD2, segD3, segD4
+};
+const byte displayCount = 4;
+const byte encodingsNumber = 11;
+ int lastDebounceTime1 =0;
+bool pause=1;
+
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 200;  // Adjust as needed
+
+byte byteEncodings[encodingsNumber] = {
+// ABCDEFGDP 
+  B11111100, // 0
+  B01100000, // 1
+  B11011010, // 2
+  B11110010, // 3
+  B01100110, // 4
+  B10110110, // 5
+  B10111110, // 6
+  B11100000, // 7
+  B11111110, // 8
+  B11110110, // 9
+  B00000001, //10
+};
+
+const bool displayOn = LOW;
+const bool displayOff = HIGH;
+
+byte registers[regSize];
+
+unsigned int currentNumber = 0;
+const byte countingDelay =100;
+unsigned long lastIncrement = 0;
+int start=0;
+
+//debounce
+byte copy=0;
+int number_copy=0;
+volatile unsigned long lastDebounceTime2 = 0;
+const unsigned long debounceDelay2 = 600;  // Adjust as needed
+const unsigned long debounceDelay1 = 200;
+unsigned long button1Debounced;
+
+
+void setup() {
+ Serial.begin(9600);
+  pinMode(buttonS, INPUT_PULLUP);  // Configure the button pin as input with internal pull-up resistor
+  attachInterrupt(digitalPinToInterrupt(buttonS), buttonStart, CHANGE);  // Attach the interrupt to the falling edge of the button
+
+  pinMode(buttonR, INPUT_PULLUP);  // Configure the button pin as input with internal pull-up resistor
+  
+
+  pinMode(buttonL, INPUT_PULLUP);  // Configure the button pin as input with internal pull-up resistor
+  attachInterrupt(digitalPinToInterrupt(buttonL), buttonLap, CHANGE);  // Attach the interrupt to the falling edge of the button
+  
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+
+  for (int i = 0; i < displayCount; i++) {
+    pinMode(displayDigits[i], OUTPUT);
+    digitalWrite(displayDigits[i], displayOn);
+    
+  }
+  
+ 
+  
+}
+
+void loop() {
+Serial.println(timestampArray[currentIndex]);
+Serial.println("button");
+
+  // Button 1 (buttonS) with simplified debounce
+  
+  // Button 2 (buttonR) with debounce
+  int buttonRState = digitalRead(buttonR);
+  if (buttonRState == LOW && millis() - lastDebounceTime2 > debounceDelay2 && pause==1) {
+    lastDebounceTime2 = millis();
+    button2Pressed = true;
+  }
+  int buttonLState = digitalRead(buttonL);
+  // Button 3 (buttonL)
+  if (button3Pressed==0 && pause==0 && millis() - lastDebounceTime2 > debounceDelay2) {
+    lastDebounceTime2 = millis();
+    timestampArray[currentIndex] = currentNumber;
+    currentIndex=(currentIndex+1)%5;
+    button3Pressed = true;  // Reset the interrupt flag
+  }
+  if (button3Pressed==0 && pause==1 && millis() - lastDebounceTime2 > debounceDelay2) {
+    lastDebounceTime2 = millis();
+      currentNumber=timestampArray[currentIndex];
+      currentIndex=(currentIndex+1)%5;
+      button3Pressed=true;
+  }
+  // Logic for button2Pressed
+  if (button2Pressed == 1 && pause==1) {
+    currentNumber = 0;
+    button2Pressed = 0;
+    start=1;
+  }
+  
+  if(button1Pressed==false){
+    pause=!pause;
+    button1Pressed=true;
+  }
+  // Main logic
+  if (pause == 1 || start == 1)
+    writeNumber(currentNumber);
+
+  if (millis() - lastIncrement > countingDelay) {
+    lastIncrement = millis();
+    if (pause == 0)
+      currentNumber++;
+    if (currentNumber > 10000) {
+      currentNumber = 0;
+    }
+  }
+
+  // Initialization logic
+  if (start == 0) {
+    int zero = 0;
+    start = 1;
+    writeNumber2(zero);
+  }
+}
+
+
+
+     
+void writeReg(byte encoding) {
+  digitalWrite(latchPin, LOW);
+  shiftOut(dataPin, clockPin, MSBFIRST, encoding);
+  digitalWrite(latchPin, HIGH);
+}
+
+void tunOffDisplays() {
+  for (byte i = 0; i < displayCount; i++) {
+    digitalWrite(displayDigits[i], displayOff);
+  }
+}
+
+void tunOnDisplay(byte displayNumber) {
+  digitalWrite(displayDigits[displayNumber], displayOn);
+}
+
+void writeNumber(unsigned int number) {
+  int currentDisplay = 3;
+  
+  while ( currentDisplay>=0) {
+    byte lastDigit = number % 10;
+    byte encoding = byteEncodings[lastDigit];
+
+    if (currentDisplay == 2) {
+      bitSet(encoding, 0);
+    }
+
+    tunOffDisplays();
+    writeReg(encoding);
+    tunOnDisplay(currentDisplay);
+    // delay(5);
+
+
+    number_copy=number;
+    number /= 10;
+    currentDisplay--;
+    copy=encoding;
+      writeReg(B00000000);
+  }
+}
+void writeNumber2(unsigned int number) {
+  int currentDisplay = 3;
+  
+  while ( currentDisplay>=0) {
+    byte lastDigit = number % 10;
+    byte encoding = byteEncodings[lastDigit];
+
+    if (currentDisplay == 2) {
+      bitSet(encoding, 0);
+    }
+
+    tunOffDisplays();
+    writeReg(encoding);
+    tunOnDisplay(currentDisplay);
+    
+
+    number /= 10;
+    currentDisplay--;
+     writeReg(B00000000);
+  }
+}
+
+
+
+  
+
+
+void buttonStart() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastDebounceTime1 > debounceDelay1) {
+    lastDebounceTime1 = currentMillis;
+    button1Pressed = false;
+  }
+}
+
+
+void buttonLap() {
+  
+  unsigned long currentMillis3 = millis();
+  
+  if (currentMillis3 - lastDebounceTime3 > debounceDelay1) {
+    lastDebounceTime3 = currentMillis3;
+    button3Pressed = false;
+  }
+}
+
+void initializeDisplays() {
+  // Set initial values to display 0000
+for (int i = 0; i < 3; i++) {
+    if(i==2)
+     writeReg(zeroDP);
+    else{
+      writeReg(byteEncodings[0]);
+    }
+    tunOnDisplay(i);
+}
+}
