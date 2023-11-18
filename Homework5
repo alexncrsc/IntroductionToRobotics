@@ -1,0 +1,538 @@
+#include <EEPROM.h>
+bool sensor1=0;
+bool sensor2=0;
+int i=0;
+
+
+
+int distance=0;
+int duration=0;
+
+// Define pin numbers for sensors and RGB LED
+// Adjust these based on your actual wiring
+int someValue = 0;
+int addressR = 99;
+int addressG =100;
+int addressB = 101;
+
+bool choosing= false;
+
+int red;
+int green;
+int blue;
+
+const int redPin = 5;   // Digital pin 5 for Red
+const int greenPin = 6; // Digital pin 6 for Green
+const int bluePin = 9;  // Digital pin 9 for Blue
+
+const int trigPin = 10;   // Connect Trig pin to digital pin 2
+const int echoPin =11;   // Connect Echo pin to digital pin 3
+int trigValue = 0;
+int echoValue = 0;
+
+const int ldrPin = 0;         // Example pin for the LDR sensor
+int ldrValue = 0;
+
+// Other global variables and constants
+
+int sensorSamplingInterval = 5;  // Default interval in seconds
+int ultrasonicAlertThreshold = 5;  // Default threshold value
+int ldrAlertThreshold = 60;  // Default threshold value
+bool automaticMode = true;  // Default to automatic mode
+int rgbRedValue = 0;        // Default red color value
+int rgbGreenValue = 255;    // Default green color value
+int rgbBlueValue = 0;       // Default blue color value
+
+enum MenuState {
+  MainMenu,
+  sensorSettings_o,
+  resetLoggerDat_o,
+  systemStatus_o,
+  rGBLEDControl_o,
+};
+
+MenuState currentMenu = MainMenu;
+
+void setup() {
+  Serial.begin(9600);
+  // Initialize sensors, LED, Serial, etc.
+  // ...
+  showMainMenu();
+  saveIntToEEPROM(addressR, 0);
+  saveIntToEEPROM(addressG, 255);
+  saveIntToEEPROM(addressB, 0);
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(ldrPin, INPUT_PULLUP);
+  for(i=0; i<10; i++)
+      saveIntToEEPROM(i, 0);
+  for(i=25; i<35; i++)
+      saveIntToEEPROM(i, 0);    
+}
+
+void showMainMenu() {
+  Serial.println("Main Menu:");
+  Serial.println("1. Sensor Settings");
+  Serial.println("2. Reset Logger Data");
+  Serial.println("3. System Status");
+  Serial.println("4. RGB LED Control");
+}
+
+void SensorSettings() {
+  Serial.println("SensorSettings:");
+  Serial.println("1 Sensors Sampling Interval");
+  Serial.println("2 Ultrasonic Alert Threshold");
+  Serial.println("3 LDR Alert Threshold");
+  Serial.println("4 Back");
+}
+void ResetLoggerData() {
+  Serial.println("1. ResetLoggerData:");
+}
+void SystemStatus() {
+  Serial.println("SystemStatus:");
+  Serial.println("1 Current Sensor Readings");
+  Serial.println("2 Current Sensor Settings");
+  Serial.println("3 Display Logged Data");
+  Serial.println("4 Back");
+}
+void RGBLEDControl() {
+  Serial.println("1 Manual Color Control");
+  Serial.println("2 LED: Toggle Automatic ON/OFF");
+  Serial.println("3 Back");
+}
+
+
+void loop() {
+
+  checkUltrasonicSensor();
+
+  checkLdrSensor();
+  // Check for user input
+  if (Serial.available() > 0) {
+    int userChoice = Serial.parseInt();
+    Serial.read();
+    Serial.println(userChoice);
+    switch (currentMenu){
+      
+      case sensorSettings_o:
+      if (choosing==0) {
+           switch(userChoice){
+            case 1:
+               setSamplingInterval();
+               choosing=1;
+               SensorSettings();
+               break;
+            case 2:
+                setUltrasonicThreshold();
+                choosing=1;
+                SensorSettings();
+                checkUltrasonicSensor();
+               break;
+            case 3:
+                setLdrThreshold();
+                choosing=1;
+                SensorSettings();
+                checkLdrSensor();
+               break;
+            case 4:
+                currentMenu= MainMenu;
+                showMainMenu();
+                choosing=1;
+               break;
+           }
+      }
+      case resetLoggerDat_o:
+      if (choosing==0) {
+          
+              resetLoggerData();
+              currentMenu= MainMenu;
+              showMainMenu();
+              choosing=1;
+              break;
+           
+      }
+      case systemStatus_o:
+        if (choosing==0) {
+          switch(userChoice){
+            case 1:
+              displayCurrentSensorReadings();
+              choosing=1;
+              SystemStatus();
+              break;
+            case 2:
+              displayCurrentSensorSettings();
+              choosing=1;
+              SystemStatus();
+              break;
+            case 3:
+              displayCurrentSensorSettings();
+              choosing=1;
+              displayLoggedData();
+              break;
+              case 4:
+              currentMenu= MainMenu;
+              choosing=1;
+              showMainMenu();
+              break;
+           }
+          
+        }
+      case rGBLEDControl_o:
+      if (choosing==0) {
+          switch(userChoice){
+            case 1:
+              manualColorControl();
+              choosing=1;
+              RGBLEDControl();
+              break;
+            case 2:
+              toggleAutomaticMode();
+              choosing=1;
+              RGBLEDControl();
+              break;
+            case 3:
+              currentMenu= MainMenu;
+              showMainMenu();
+              choosing=1;
+              break;
+           }
+      }
+  case MainMenu:
+        if (choosing==0) {
+          switch(userChoice){
+            case 1:{
+               currentMenu = sensorSettings_o;
+               choosing = true;
+               SensorSettings();
+               break;
+            }
+            case 2:
+                currentMenu = resetLoggerDat_o;
+                choosing = true;
+                ResetLoggerData();
+                break;
+            case 3:
+                currentMenu = systemStatus_o;
+                choosing = true;
+                SystemStatus();
+               break;
+            case 4:
+                currentMenu = rGBLEDControl_o;
+                choosing = true;
+                RGBLEDControl();
+               break;
+          }
+    }}
+
+  // Check ultrasonic sensor
+  checkUltrasonicSensor();
+  choosing=0;
+  // Check LDR sensor
+  checkLdrSensor();
+
+  // Add other loop logic as needed
+
+   } 
+}
+//function for the sampling rate interval
+void setSamplingInterval() {
+  Serial.println("Enter the sampling interval for sensors (1-10 seconds): ");
+  
+  while (true) {
+    if (Serial.available() > 0) {
+      String inputString = Serial.readStringUntil('\n');
+      int interval = inputString.toInt();
+      Serial.read();
+      Serial.println(interval);
+      
+      
+      if (interval >= 1 && interval <= 10) {
+        sensorSamplingInterval = interval;
+        Serial.println("Sampling interval set to " + String(interval) + " seconds.");
+        return;
+      } else {
+            if (interval == 13) {
+            break;
+          } else {
+            Serial.println("Invalid input. Enter a value between 1 and 10.");
+          }
+        }
+    
+        }
+      }
+    }
+
+// Function to display the current sensor settings
+void displaySensorSettings() {
+  Serial.println("Current Sensor Settings:");
+  Serial.println("Sampling Interval: " + String(sensorSamplingInterval) + " seconds");
+  // Display other settings if needed
+}
+
+// Function to set the ultrasonic sensor's alert threshold
+void setUltrasonicThreshold() {
+  Serial.println("Enter the ultrasonic alert threshold value: ");
+  
+  while (true) {
+    if (Serial.available() > 0) {
+      String inputString = Serial.readStringUntil('\n');
+      int threshold = inputString.toInt();
+      
+      if (threshold >= 0 && threshold!=13) {
+        ultrasonicAlertThreshold = threshold;
+        Serial.println("Ultrasonic alert threshold set to " + String(ultrasonicAlertThreshold) + ".");
+        return;
+      } 
+      else{
+        if (threshold == 13) {
+              break;
+        } else {
+          Serial.println("Invalid input. Enter a non-negative value.");
+        }
+      }
+    }
+  }
+}
+
+// Function to check ultrasonic sensor and give alert if threshold exceeded
+void checkUltrasonicSensor() {
+  digitalWrite(trigPin, LOW);
+  delay(2);
+  digitalWrite(trigPin, HIGH);
+  delay(8);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration*0.034/2;
+  //trigValue = digitalRead(trigPin);
+  //echoValue = digitalRead(echoPin);
+
+  if (distance > ultrasonicAlertThreshold ) {
+    Serial.println("Ultrasonic sensor alert! Distance exceeds threshold.");
+    getEEPROM();
+    sensor2=1;
+    
+  }
+  else
+      sensor2=0;
+  if(sensor1==1 || sensor2==1){
+  if (automaticMode==true)
+  {
+      setRgbColor(255,0,0);
+      
+  }
+  else
+      setRgbColor(red,blue,green);
+  }
+
+  else{
+      sensor2=0;
+      setRgbColor(0,255,0);
+  }
+}
+
+void setLdrThreshold() {
+  Serial.println("Enter the LDR alert threshold value: ");
+  while (true) {
+    if (Serial.available() > 0) {
+      String inputString = Serial.readStringUntil('\n');
+      int threshold = inputString.toInt();
+
+      if (threshold >= 0) {
+        ldrAlertThreshold = threshold;
+        Serial.println("LDR alert threshold set to " + String(ldrAlertThreshold ) + ".");
+        break;}
+        else{
+            if (threshold == 13) {
+                break;
+          } else {
+                  Serial.println("Invalid input. Enter a non-negative value.");
+            }
+        }
+      
+    
+   }
+  }
+}
+
+// Function to check LDR sensor and give alert if threshold exceeded
+void checkLdrSensor() {
+  // Replace these with actual LDR sensor readings
+  int ldrSensorValue = analogRead(ldrPin);
+
+
+  //ldrValue = analogRead(ldrPin);
+  if (ldrSensorValue > ldrAlertThreshold) {
+    Serial.println("LDR sensor alert! Light level exceeds threshold.");
+    getEEPROM();
+    sensor1=1;
+    
+    
+  }
+  else
+      sensor1=0;
+  if(sensor1==1 || sensor2==1){
+  if (automaticMode==true)
+      setRgbColor(255,0,0);
+      
+  
+  else
+      setRgbColor(red,blue,green);
+
+
+  }
+  else{
+      sensor1=0;
+      setRgbColor(0,255,0);
+  }
+}
+
+
+void resetLoggerData() {
+  Serial.println("Are you sure you want to reset logger data? (YES/NO)");
+
+  while (true) {
+    if (Serial.available() > 0) {
+      String userInput = Serial.readStringUntil('\n');
+      userInput.trim();  // Remove leading and trailing whitespaces
+
+      if (userInput.equalsIgnoreCase("YES")) {
+        Serial.println("Data reset confirmed. Resetting...");
+        saveIntToEEPROM(addressR, 0);
+        saveIntToEEPROM(addressG, 0);
+        saveIntToEEPROM(addressB, 0);
+        break;
+      } else if (userInput.equalsIgnoreCase("NO")) {
+        Serial.println("Data reset canceled.");
+        break;
+      } else {
+        Serial.println("Invalid input. Type YES or NO.");
+      }
+
+      // Discard any remaining characters in the serial buffer
+      while (Serial.available() > 0) {
+        Serial.read();
+      }
+    }
+  }
+  
+}
+
+
+
+void displayCurrentSensorReadings() {
+  Serial.println("Press any key to stop displaying readings.");
+
+  unsigned long previousMillis = millis();
+
+  while (!Serial.available()) {
+    unsigned long currentMillis = millis();
+
+    // Check if it's time to read and display sensor readings
+    if (currentMillis - previousMillis >= sensorSamplingInterval * 1000) {
+    
+      // Replace these with actual sensor readings
+      digitalWrite(trigPin, LOW);
+      delay(2);
+      digitalWrite(trigPin, HIGH);
+      delay(8);
+      digitalWrite(trigPin, LOW);
+      duration = pulseIn(echoPin, HIGH);
+      distance = duration*0.034/2;
+      int ldrSensorValue = analogRead(ldrPin);
+      saveIntToEEPROM(0, distance);
+      saveIntToEEPROM(25, ldrSensorValue);
+     
+    
+
+      Serial.println("Current Sensor Readings:");
+      Serial.println("Ultrasonic Sensor: " + String(distance));
+      Serial.println("LDR Sensor: " + String(ldrSensorValue));
+
+      previousMillis = currentMillis;  // Save the last time readings were taken
+    }
+
+    // Check for user input to stop displaying readings
+    if (Serial.available()) {
+      // Discard the input to avoid interference with menu choices
+      Serial.read();
+      break;
+    }
+  }
+}
+
+void displayCurrentSensorSettings() {
+  Serial.println("Current Sensor Settings:");
+  Serial.println("Sampling Interval: " + String(sensorSamplingInterval) + " seconds");
+  Serial.println("Ultrasonic Alert Threshold: " + String(ultrasonicAlertThreshold));
+  Serial.println("LDR Alert Threshold: " + String(ldrAlertThreshold));
+}
+
+
+void manualColorControl() {
+  Serial.println("Enter RGB values (0-255) for each channel (Red Green Blue): ");
+
+  while (true) {
+    if (Serial.available() > 0) {
+      int red = Serial.parseInt();
+      int green = Serial.parseInt();
+      int blue = Serial.parseInt();
+
+      if (red >= 0 && red <= 255 && green >= 0 && green <= 255 && blue >= 0 && blue <= 255) {
+        saveIntToEEPROM(addressR, red);
+        saveIntToEEPROM(addressG, green);
+        saveIntToEEPROM(addressB, blue);
+         rgbRedValue = red;
+        rgbGreenValue = green;
+        rgbBlueValue = blue;
+        setRgbColor(rgbRedValue, rgbGreenValue, rgbBlueValue );
+        Serial.println("RGB colors set: (" + String(red) + ", " + String(green) + ", " + String(blue) + ")");
+        break;
+      } else {
+        Serial.println("Invalid input. Enter values between 0 and 255 for each channel.");
+      }
+
+      // Discard any remaining characters in the serial buffer
+      while (Serial.available() > 0) {
+        Serial.read();
+      }
+    }
+  }
+}
+
+
+void toggleAutomaticMode() {
+  automaticMode = !automaticMode;
+  Serial.println("Automatic mode " + String(automaticMode ? "ON" : "OFF"));
+
+
+}
+
+void setRgbColor(int red, int green, int blue) {
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue);
+}
+
+void saveIntToEEPROM(int address, int value) {
+  EEPROM.put(address, value);
+}
+
+void getEEPROM(){
+  EEPROM.get(addressR, red);
+  EEPROM.get(addressG, green);
+  EEPROM.get(addressB, blue);
+}
+
+void displayLoggedData(){
+    int val;
+          EEPROM.get(0, val);
+          Serial.println("ULTRA:");
+          Serial.println(val);
+          EEPROM.get(25, val);
+          Serial.println("LDR:");
+          Serial.println(val);
+     
+}
