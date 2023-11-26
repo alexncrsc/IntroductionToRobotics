@@ -20,8 +20,6 @@ The code follows OOP principles for better structure. Player and wall positions 
 
 ## Media
 ![Bomber Game](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/c9e9c48f-a840-47c1-a683-28271129ab10)
-)
-)  
 [Watch the Video](https://www.youtube.com/watch?v=jMmMzy77aes)
 
 ## Getting Started
