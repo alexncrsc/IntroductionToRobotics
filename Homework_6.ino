@@ -107,7 +107,8 @@ Wall walls[maxWalls] = {
   Wall(8, 3),
    Wall(3, 2),
   Wall(2, 5),
-  
+
+
 };
 
 void setup() {
@@ -144,11 +145,11 @@ void isCollision(Player& player, Bomb& bomb) {
 
   for (int i = 0; i < maxWalls; i++) {
     if(((abs(bomb.x - walls[i].x) == 1 && bomb.y == walls[i].y) || (bomb.x == walls[i].x && abs(bomb.y - walls[i].y) == 1))&& explosion==1) {
-          walls[i].x=-1, walls[i].y=-1,walls[i].draw(), Serial.print("zid"), count=count-1;
+          walls[i].x=-1, walls[i].y=-1,walls[i].draw(), count=count-1;
     }
   }
   if(((abs(bomb.x - player.x) == 1 && bomb.y == player.y) || (bomb.x == player.x && abs(bomb.y - player.y) == 1))&& explosion==1) {
-    Serial.print("mort"),loose();
+    loose();
 }
   
 
@@ -191,7 +192,8 @@ void handleJoystick(Player& player) {
 
 void loop() {
   
-Serial.print(count);
+
+  
   while (true) {
     if(count==1)
       win();
@@ -288,8 +290,7 @@ Serial.print(count);
     if(timer==0)
       exp_time=0;
     else
-      exp_time=millis();
-    Serial.println(count);
+      exp_time=millis(); 
     if(exp_time -time>3000&&exp_time -time<3350){
       lc.setLed(0, bomb.x, bomb.y+1, true);
       lc.setLed(0, bomb.x-1, bomb.y, true);
