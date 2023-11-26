@@ -1,5 +1,6 @@
 #include "LedControl.h"
 int timer=0;
+int ctime;
 long time=0;
 LedControl lc = LedControl(12, 11, 10, 1);  // Pins for DIN, CLK, CS, and number of MAX7219s
 bool explosion=0;
@@ -190,16 +191,15 @@ void handleJoystick(Player& player) {
 
 void loop() {
   
-
+Serial.print(count);
   while (true) {
     if(count==1)
       win();
-
     drawAllEntities(player, bomb);
    handleJoystick(player);
    isCollision(player, bomb);
     while(var==-1){
-      int ctime=millis();
+      
         lc.setLed(0, 2, 3, true);
   lc.setLed(0, 5, 3, true);
 
@@ -209,7 +209,7 @@ void loop() {
   lc.setLed(0, 4, 5, true);
   lc.setLed(0, 5, 6, true);
 
-        if(millis() -ctime>1500){
+        if(millis() -ctime>2500){
           var=0;
           lc.setLed(0, 2, 3,false);
   lc.setLed(0, 5, 3,false);
@@ -223,7 +223,7 @@ void loop() {
 }
         }
       
-  while(var==1){int ctime=millis();
+  while(var==1){
             lc.setLed(0, 2, 3, true);
   lc.setLed(0, 5, 3, true);
 
@@ -232,7 +232,7 @@ void loop() {
   lc.setLed(0, 3, 6, true);
   lc.setLed(0, 4, 6, true);
   lc.setLed(0, 5, 5, true);
-        if(millis() -ctime>1500){
+        if(millis() -ctime>2500){
           var=0;
            lc.setLed(0, 2, 3, false);
   lc.setLed(0, 5, 3, false);
@@ -331,6 +331,7 @@ void loop() {
 void loose(){
     eraseAllEntities(player, bomb);
     var=-1;
+   ctime=millis();
     lc.setLed(0, bomb.x, bomb.y+1, false);
       lc.setLed(0, bomb.x-1, bomb.y, false);
       lc.setLed(0, bomb.x+1, bomb.y, false);
@@ -340,11 +341,18 @@ void loose(){
 }
 void win(){
  eraseAllEntities(player, bomb);
+ ctime=millis();
+ lc.setLed(0, bomb.x, bomb.y+1, false);
+      lc.setLed(0, bomb.x-1, bomb.y, false);
+      lc.setLed(0, bomb.x+1, bomb.y, false);
+      lc.setLed(0, bomb.x, bomb.y-1, false);
+     lc.setLed(0, bomb.x, bomb.y, false);
+     bomb.x=-1,bomb.y=-1; 
   var=1;
 }
 
 void reset(){
-
+  eraseAllEntities(player, bomb);
   walls[1].x=1;
   walls[1].y=2;
   walls[2].x=4;
