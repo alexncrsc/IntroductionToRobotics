@@ -19,7 +19,8 @@ I created a Bomber-style game for a robotics project. The player moves with a jo
 The code follows OOP principles for better structure. Player and wall positions are predetermined. The game resets if you win or lose. Using a single bomb variable simplifies logic.
 
 ## Media
-![Bomber Game](![Untitled](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/009f90e0-a148-487c-97fd-c4c2a82ce25c)
+![Bomber Game](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/c9e9c48f-a840-47c1-a683-28271129ab10)
+)
 )  
 [Watch the Video](https://www.youtube.com/watch?v=jMmMzy77aes)
 
