@@ -81,4 +81,7 @@ I worked with three arrays simultaneously: one for controlling the LED pins, one
 
 ## Link to a video where it's showcased:  https://www.youtube.com/watch?v=0s4tPm-hV2c&feature=youtu.be
 
+Hello,
+
+Please be informed that starting with the homework 5, you can find the read me separately in the main repo. Thanks!
 
