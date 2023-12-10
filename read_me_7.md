@@ -20,7 +20,7 @@ The current version of the game features four main options accessible from the m
 
 
 This is a video showcasing it:
-https://studio.youtube.com/video/l2iPKeqenpA/edit
+[https://studio.youtube.com/video/l2iPKeqenpA/edit](https://youtu.be/l2iPKeqenpA)
 This is a picture with the setup:
 ![Untitled](https://github.com/alexncrsc/IntroductionToRobotics/assets/61351673/e257abeb-0f26-4841-9d16-c5da1cab5e7d)
 
